@@ -52,7 +52,7 @@ Let's run the program to get it easily. At the menu, we can see things like this
 
 ![menu.png](images/menu.png)
 
-It tells us that we could use a technique called [House of Orange](#). Analizing in ghidra and run in terminal, we know that it can take the variable name from `A` to `Z` by getting its index:
+It tells us that we could use a technique called [House of Orange](https://github.com/shellphish/how2heap/blob/master/glibc_2.23/house_of_orange.c). Analizing in ghidra and run in terminal, we know that it can take the variable name from `A` to `Z` by getting its index:
 
 ![variable.png](images/variable.png)
 
@@ -60,11 +60,9 @@ So that `X` can be from `A` to `Z`:
 
 ![input_var_terminal.png](images/input_var_terminal.png)
 
-This means we can contain and control upto 25 chunk. And one more thing we can notice is that with each chunk, we can write unlimited data to that chunk, hence overwrite the next chunk:
+This means we can contain and control upto 25 chunk. And one more thing we can notice is that with each chunk, we can write unlimited data to that chunk, hence overwrite the next chunk --> **Heap Overflow**:
 
 ![gets_main.png](images/gets_main.png)
-
---> **Heap Overflow**
 
 And that's all we can find, just 25 chunks with **Heap Overflow** and no free(), let's see the magic right now!
 
@@ -80,7 +78,7 @@ To be clear, we will take this example below. The heap is usually allocated with
 
 ![Technique_malloc1.png](images/Technique_malloc1.png)
 
-Let's assume that we can change the top chunk size by somehow. We will change top chunk size from 0x20c00 to 0xc00:
+Let's assume that we can change the top chunk size by somehow. We will change top chunk size from 0x20c00 to 0xc00 with the `PREV_INUSE` bit is set:
 
 ![Technique_malloc2.png](images/Technique_malloc2.png)
 
@@ -90,9 +88,11 @@ So that when we malloc with a large number `malloc(0x1000)`, that top chunk cann
 
 Because top chunk size is 0xc00, which is very large. So when top chunk is freed, it goes to unsorted bin. 
 
-So if our top chunk size is small enough, which fit size of tcache, when we use this technique to free the top chunk, it will go to tcache bin. That's sound interesint, right?
+So if our top chunk size is small enough, which fit size of tcache, when we use this technique to free the top chunk, it will go to tcache bin. That's sound interesting, right?
 
-Wait, there are something before we finish this technique. Remember that the heap boundaries are page aligned with the size of 0x1000. So if you do want to malloc a chunk larger than top chunk, just to make sure that the size of top chunk with the size of previous chunk can be divided with 0x1000.
+Wait, there are something before we finish this technique. Remember that the heap boundaries are page aligned with the size of 0x1000. So if you do want to malloc a chunk larger than top chunk, just to make sure that the address of top chunk add with the size of top chunk can be divided with 0x1000:
+
+![Technique_malloc4.png](images/Technique_malloc4.png)
 
 With above example, why I overwrite top chunk size from 0x20c00 to 0xc00 but not any other size? Because if you take 0xc00 + 0x400 = 0x1000, which satisfy the alignment. 
 
