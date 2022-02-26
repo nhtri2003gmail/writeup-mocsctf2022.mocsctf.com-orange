@@ -109,9 +109,9 @@ So if our top chunk size is small enough, which fit size of tcache, when we use 
 
   3. Overwriting top chunk size require 2 constraints:
 
-    1. The size of top chunk need to be aligned with size of 0x1000 (`(top chunk address + top chunk size) % 0x1000 == 0` )
+    1.1. The size of top chunk need to be aligned with size of 0x1000 (`(top chunk address + top chunk size) % 0x1000 == 0` )
 
-    2. The `PREV_INUSE` bit need to be set
+    1.2. The `PREV_INUSE` bit need to be set
 
 ### Brainstorming
 
