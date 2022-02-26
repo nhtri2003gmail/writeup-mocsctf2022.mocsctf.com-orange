@@ -106,7 +106,8 @@ So if our top chunk size is small enough, which fit size of tcache, when we use 
   1. We can malloc maximum 0x1000 bytes
   2. Malloc chunk larger than top chunk will free that top chunk
   3. Overwriting top chunk size require 2 constraints:
-      - The size of top chunk need to be aligned with size of 0x1000 (`(top chunk address + top chunk size) % 0x1000 == 0` )
+      - The size of top chunk need to be aligned with size of 0x1000</br>
+      `(top chunk address + top chunk size) % 0x1000 == 0`
       - The `PREV_INUSE` bit need to be set
 
 ### Brainstorming
