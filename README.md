@@ -74,39 +74,44 @@ If you are not familiar with heap, just read this to know about all kinds of chu
 
 The main thing to remember is that if we malloc(0x1000) but top chunk size is just 0x300, which means that top chunk cannot satisfy the malloc. Hence, that top chunk will be freed and program will malloc 0x1000 byte on the next page of heap.
 
+The other thing is that we can only malloc maximum 0x1000 bytes.
+
 To be clear, we will take this example below. The heap is usually allocated with a top chunk of size 0x21000. So when we malloc a 0x400-byte chunk, the top chunk will split itself and remain `0x21000 - 0x400 = 0x20c00` with the bit `PREV_INUSE` is set:
 
 ![Technique_malloc1.png](images/Technique_malloc1.png)
 
-Let's assume that we can change the top chunk size by somehow. We will change top chunk size from 0x20c00 to 0xc00 with the `PREV_INUSE` bit is set:
+Now we want to malloc maximum 0x1000, so the top chunk size need to be lower than 0x1000 to conduct this technique. Let's assume that we can change the top chunk size by somehow. Because there is a check about the alignment of top chunk so just to make sure that:
 
-![Technique_malloc2.png](images/Technique_malloc2.png)
+```
+(top chunk address + top chunk size) % 0x1000 == 0
+```
 
-So that when we malloc with a large number `malloc(0x1000)`, that top chunk cannot satisfy our malloc. Then that top chunk will be freed:
-
-![Technique_malloc3.png](images/Technique_malloc3.png)
-
-Because top chunk size is 0xc00, which is very large. So when top chunk is freed, it goes to unsorted bin. 
-
-So if our top chunk size is small enough, which fit size of tcache, when we use this technique to free the top chunk, it will go to tcache bin. That's sound interesting, right?
-
-Wait, there are something before we finish this technique. Remember that the heap boundaries are page aligned with the size of 0x1000. So if you do want to malloc a chunk larger than top chunk, just to make sure that the address of top chunk add with the size of top chunk can be divided with 0x1000:
+In our example, the size we want to overwrite into is `0xc00`:
 
 ![Technique_malloc4.png](images/Technique_malloc4.png)
 
-With above example, why I overwrite top chunk size from 0x20c00 to 0xc00 but not any other size? Because if you take 0xc00 + 0x400 = 0x1000, which satisfy the alignment. 
+Address `0x55555555b000` can satisfy the alignment so we will change top chunk size from 0x20c00 to 0xc00 with the `PREV_INUSE` bit is set.
 
-So that's why I chose to overwrite from 0x20c00 to 0xc00 but not any other size. But if you malloc a chunk with different size (such as 0x900) so top chunk will be 0x21000 - 0x900 = 0x20700 and we just need to overwrite 0x700 to top chunk size and that would be ok. 
+![Technique_malloc2.png](images/Technique_malloc2.png)
 
-Ah and remember, we can malloc maximum is 0x1000 byte. And remember to always set the bit `PREV_INUSE` at overwritten top chunk size.
+So that when we malloc with a large number `malloc(0x1000)`, that top chunk cannot satisfy our malloc. Then that top chunk will be freed without any error:
+
+![Technique_malloc3.png](images/Technique_malloc3.png)
+
+Because top chunk size is 0xc00, which is large. So when top chunk is freed, it goes to unsorted bin. 
+
+So if our top chunk size is small enough, which fit size of tcache, when we use this technique to free the top chunk, it will go to tcache bin. That's sound interesting, right?
 
 - Summary technique:
+  1. We can malloc maximum 0x1000 bytes
 
-  1. Malloc chunk larger than top chunk will free that top chunk
+  2. Malloc chunk larger than top chunk will free that top chunk
 
-  2. To do that, the size of top chunk need to be aligned with size of 0x1000 (top chunk size with all the previous chunk size)
+  3. Overwriting top chunk size require 2 constraints:
 
-  3. And remember to set `PREV_INUSE` bit of top chunk size
+    1. The size of top chunk need to be aligned with size of 0x1000 (`(top chunk address + top chunk size) % 0x1000 == 0` )
+
+    2. The `PREV_INUSE` bit need to be set
 
 ### Brainstorming
 
