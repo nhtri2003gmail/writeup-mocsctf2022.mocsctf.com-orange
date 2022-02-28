@@ -137,6 +137,14 @@ And then, we abuse the tcache link list by overwriting the forward pointer to wh
 
 # 3. Exploit
 
+### Table of content
+
+  1. Leak main arena address
+  2. Free 2 small chunks
+  3. Get shell
+
+---
+
 Before we start our exploitation, I wrote these function to help our exploit more convenient
 
 <details>
@@ -165,7 +173,7 @@ def puts(index):
 
 And now let's start!
 
-### Stage 1: Leak main arena address
+### Stage 1: Leak main arena address (Table of content)
 
 At first, we will need a chunk with index 0 (means `A` because we use the `getchar()` function to turn index to char) with any size so that we can overwrite all the next chunk with just chunk `A`:
 
@@ -316,7 +324,7 @@ So the libc base address is `0x00007f416cdfe000`, the leaked address is `0x00007
 
 So every time we get the leaked libc main arena address, we just subtract with this offset and we have the libc base address. That's great for now! Let's move on the second stage: Free 2 small chunks!
 
-### Stage 2: Free 2 small chunks
+### Stage 2: Free 2 small chunks (Table of content)
 
 Now, we will continue using the above technique to free 2 top chunk with small size. Do you still remember we have already chunk index 1 which in the new page of heap? This time, we will reuse that to overwrite the new top chunk size again. 
 
@@ -416,7 +424,7 @@ And we get the second freed chunk in tcache:
 
 With 2 freed chunk in tcache, we are very closed to the shell. Let's move on final stage: Get shell!
 
-### Stage 3: Get shell
+### Stage 3: Get shell (Table of content)
 
 This time, we will abuse tcache link list by changing forward pointer to whatever place we want. But first, let's find a one gadget that we can use:
 
@@ -579,7 +587,7 @@ gef➤  x/10i $rip
 
 Just 6 pop, if we increase the index of chunk a bit, we can get r12 and r15 null easily. So we will add a variable called `n` plus with all index to increase the index, this is more effective way than changing index one by one, it can make you confused.
 
-For example, with the `gets(3, payload)` at the end, we will change it to `gets(3+n, payload)` and with n may change. I will choose `n=10` and new index will be 10, 11, 12, 13 and 14. That's the perfect index and we now get the shell.
+For example, with the `gets(3, payload)` at the end, we will change it to `gets(3+n, payload)` and with n can be changed. I will choose `n=10` and new index will be 10, 11, 12, 13 and 14. That's the perfect index and we now get the shell.
 
 Full code: [solve.py](solve.py)
 
