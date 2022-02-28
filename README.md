@@ -139,9 +139,9 @@ And then, we abuse the tcache link list by overwriting the forward pointer to wh
 
 ### Table of content
 
-  1. Leak main arena address
-  2. Free 2 small chunks
-  3. Get shell
+  1. [Leak main arena address](#stage-1-leak-main-arena-address-table-of-content)
+  2. [Free 2 small chunks](#stage-2-free-2-small-chunks-table-of-content)
+  3. [Get shell](#stage-3-get-shell-table-of-content)
 
 ---
 
@@ -173,7 +173,7 @@ def puts(index):
 
 And now let's start!
 
-### Stage 1: Leak main arena address (Table of content)
+### Stage 1: Leak main arena address ([Table of content](#table-of-content))
 
 At first, we will need a chunk with index 0 (means `A` because we use the `getchar()` function to turn index to char) with any size so that we can overwrite all the next chunk with just chunk `A`:
 
@@ -324,7 +324,7 @@ So the libc base address is `0x00007f416cdfe000`, the leaked address is `0x00007
 
 So every time we get the leaked libc main arena address, we just subtract with this offset and we have the libc base address. That's great for now! Let's move on the second stage: Free 2 small chunks!
 
-### Stage 2: Free 2 small chunks (Table of content)
+### Stage 2: Free 2 small chunks ([Table of content](#table-of-content))
 
 Now, we will continue using the above technique to free 2 top chunk with small size. Do you still remember we have already chunk index 1 which in the new page of heap? This time, we will reuse that to overwrite the new top chunk size again. 
 
@@ -424,7 +424,7 @@ And we get the second freed chunk in tcache:
 
 With 2 freed chunk in tcache, we are very closed to the shell. Let's move on final stage: Get shell!
 
-### Stage 3: Get shell (Table of content)
+### Stage 3: Get shell ([Table of content](#table-of-content))
 
 This time, we will abuse tcache link list by changing forward pointer to whatever place we want. But first, let's find a one gadget that we can use:
 
